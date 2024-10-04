@@ -40,9 +40,18 @@ int main(){
     std::cout << "Example of output \n";
     std::cout << i << std::endl;
     // matrix add i + j
+    std::cout << "Example of matrix add \n";
+    Eigen::Matrix3f k = i + j;
+    std::cout << k << std::endl;
     // matrix scalar multiply i * 2.0
+    std::cout << "Example of matrix multiply scalar \n";
+    std::cout << i * 2.0 << std::endl;
     // matrix multiply i * j
+    std::cout << "Example of matrix multiply matrix \n";
+    std::cout << i * j << std::endl;
     // matrix multiply vector i * v
+    std::cout << "Example of matrix multiply vector \n";
+    std::cout << i * v << std::endl;
 
     return 0;
 }
