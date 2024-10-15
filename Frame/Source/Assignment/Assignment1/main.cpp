@@ -2,6 +2,7 @@
 #include "rasterizer.hpp"
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
+#include <cmath>
 #include <opencv2/opencv.hpp>
 
 constexpr double MY_PI = 3.1415926;
@@ -11,8 +12,10 @@ Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
     Eigen::Matrix4f view = Eigen::Matrix4f::Identity();
 
     Eigen::Matrix4f translate;
-    translate << 1, 0, 0, -eye_pos[0], 0, 1, 0, -eye_pos[1], 0, 0, 1,
-        -eye_pos[2], 0, 0, 0, 1;
+    translate << 1, 0, 0, -eye_pos[0],
+                 0, 1, 0, -eye_pos[1],
+                 0, 0, 1, -eye_pos[2],
+                 0, 0, 0, 1;
 
     view = translate * view;
 
@@ -23,9 +26,37 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 {
     Eigen::Matrix4f model = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
     // Create the model matrix for rotating the triangle around the Z axis.
     // Then return it.
+    float rot_rad = rotation_angle / 180.0 * MY_PI;
+    Eigen::Matrix4f translate;
+    translate << cos(rot_rad), -sin(rot_rad), 0, 0,
+                 sin(rot_rad), cos(rot_rad), 0, 0,
+                 0, 0, 1, 0,
+                 0, 0, 0, 1;
+    model = translate * model;
+
+    return model;
+}
+
+Eigen::Matrix4f get_model_matrix(Vector3f axis, float angle)
+{
+    // Create the model matrix for rotating the triangle around any axis from zero point.
+    // Then return it.
+    float rot_rad = angle / 180.0 * MY_PI;
+    Eigen::Matrix3f model3f = Eigen::Matrix3f::Identity();
+    model3f = cos(rot_rad) * model3f + (1.0 - cos(rot_rad)) * axis * axis.transpose();
+    Eigen::Matrix3f tmp3f;
+    tmp3f << 0, -axis.z(), axis.y(),
+             axis.z(), 0, -axis.x(),
+             -axis.y(), axis.x(), 0;
+    model3f += sin(rot_rad) * tmp3f;
+   
+    Eigen::Matrix4f model;
+    model << model3f(0, 0), model3f(0, 1), model3f(0, 2), 0,
+             model3f(1, 0), model3f(1, 1), model3f(1, 2), 0,
+             model3f(2, 0), model3f(2, 1), model3f(2, 2), 0,
+             0, 0, 0, 1;
 
     return model;
 }
@@ -33,13 +64,18 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
                                       float zNear, float zFar)
 {
-    // Students will implement this function
-
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
+    float fov_rad = eye_fov / 180.0 * MY_PI;
+    float tan_fov_2 = tan(fov_rad / 2.0);
+    Eigen::Matrix4f translate;
+    translate << -1.0 / (tan_fov_2 * aspect_ratio), 0, 0, 0,
+                 0, -1.0 / tan_fov_2, 0, 0,
+                 0, 0, (zNear + zFar) / (zFar - zNear), 2 * zNear * zFar / (zFar - zNear),
+                 0, 0, 1, 0;
+    projection = translate * projection;
 
     return projection;
 }
@@ -61,6 +97,7 @@ int main(int argc, const char** argv)
     rst::rasterizer r(700, 700);
 
     Eigen::Vector3f eye_pos = {0, 0, 5};
+    Eigen::Vector3f axis = { 1, 1, 0 };
 
     std::vector<Eigen::Vector3f> pos{{2, 0, -2}, {0, 2, -2}, {-2, 0, -2}};
 
@@ -75,7 +112,8 @@ int main(int argc, const char** argv)
     if (command_line) {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
-        r.set_model(get_model_matrix(angle));
+        //r.set_model(get_model_matrix(angle));
+        r.set_model(get_model_matrix(axis, angle));
         r.set_view(get_view_matrix(eye_pos));
         r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
@@ -91,7 +129,8 @@ int main(int argc, const char** argv)
     while (key != 27) {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
-        r.set_model(get_model_matrix(angle));
+        //r.set_model(get_model_matrix(angle));
+        r.set_model(get_model_matrix(axis, angle));
         r.set_view(get_view_matrix(eye_pos));
         r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
