@@ -95,6 +95,12 @@ namespace rst
         std::vector<float> depth_buf;
         int get_index(int x, int y);
 
+        std::vector<std::vector<float>> ss_depth_buf;
+        std::vector<std::vector<Eigen::Vector3f>> ss_color_buf;
+        int get_ss_index(int i, int j) const { return i * SUPER_SAMPLE_X_NUM + j; }
+        static constexpr int SUPER_SAMPLE_X_NUM = 2;
+        static constexpr int SUPER_SAMPLE_Y_NUM = 2;
+
         int width, height;
 
         int next_id = 0;
