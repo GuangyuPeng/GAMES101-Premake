@@ -92,10 +92,6 @@ Vector3f Scene::pathTraceShade(const Intersection& shadeInter, const Vector3f& o
     
     if (!material) return Vector3f{};
 
-    /*if (material->Kd.y == 0.45f) {
-        std::cout << "The green material" << std::endl;
-    }*/
-
     /// Step 0. Add the energy if the shade point itself is a light
     if (material->hasEmission()) {
         directLight = material->getEmission();
@@ -109,13 +105,13 @@ Vector3f Scene::pathTraceShade(const Intersection& shadeInter, const Vector3f& o
         Vector3f point2LightDir = (samplePos.coords - shadePoint).normalized();
         Ray point2Light(shadePoint, point2LightDir);
         Intersection hitPos = Scene::intersect(point2Light);
-        if (hitPos.happened && hitPos.coords.x == samplePos.coords.x
-            && hitPos.coords.y == samplePos.coords.y
-            && hitPos.coords.z == samplePos.coords.z) {
+        if (hitPos.happened && fabs(hitPos.coords.x - samplePos.coords.x) < EPSILON
+            && fabs(hitPos.coords.y - samplePos.coords.y) < EPSILON
+            && fabs(hitPos.coords.z - samplePos.coords.z) < EPSILON) {
             
             Vector3f lightNormal = samplePos.normal;
             Vector3f inDir = -point2LightDir;       // inDir: from light to shade point
-            directLight += samplePos.emit * material->eval(outDir, -inDir, shadeNormal)
+            directLight += samplePos.emit * material->eval(-inDir, outDir, shadeNormal)
                 * (dotProduct(-inDir, shadeNormal) * dotProduct(inDir, lightNormal)
                 / (powf((samplePos.coords - shadePoint).norm(), 2)) / pdf);
         }
@@ -131,8 +127,8 @@ Vector3f Scene::pathTraceShade(const Intersection& shadeInter, const Vector3f& o
         Ray inDirRay(shadePoint, inDir);
         Intersection hitPos = Scene::intersect(inDirRay);
         if (hitPos.happened && hitPos.m && !hitPos.m->hasEmission()) {
-            indirectLight = pathTraceShade(hitPos, -inDir) * material->eval(outDir, inDir, shadeNormal)
-                * dotProduct(inDir, shadeNormal) / material->pdf(outDir, inDir, shadeNormal) / RussianRoulette;
+            indirectLight = pathTraceShade(hitPos, -inDir) * material->eval(inDir, outDir, shadeNormal)
+                * dotProduct(inDir, shadeNormal) / material->pdf(inDir, outDir, shadeNormal) / RussianRoulette;
         }
     }
 
